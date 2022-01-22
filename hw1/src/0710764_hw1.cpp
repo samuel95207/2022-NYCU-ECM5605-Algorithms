@@ -107,7 +107,7 @@ class DataCenter {
             sortedChains[i] = chains[i];
         }
         std::sort(sortedChains, sortedChains + t, [](Chain const &a, Chain const &b) -> bool {
-            return a.size * a.cost > b.size * b.cost;
+            return a.cost > b.cost;
         });
         // for (int i = 0; i < t; i++) {
         //     std::cout<<sortedChains[i];
@@ -120,7 +120,7 @@ class DataCenter {
         }
 
 
-        int partitionRemainder = n % partitionSize;
+        int partitionRemainder = n % k;
         int partitionedServiceCount = 0;
         int partitionDatacenterCount = 0;
         int partitionDatacenterIter = 0;
@@ -260,7 +260,7 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     std::cout << "\n";
     DC.initialPartition();
-    DC.printAdjList();
+    // DC.printAdjList();
     // DC.printDataCenter();
 
 
