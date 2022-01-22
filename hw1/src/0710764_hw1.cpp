@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <fstream>
@@ -29,6 +30,18 @@ class Chain {
     }
 
     void setId(int id_in) { id = id_in; }
+
+    void operator=(Chain const &C) {
+        id = C.id;
+        size = C.size;
+        cost = C.cost;
+        if (C.chain != nullptr) {
+            chain = new int[size];
+            for (int i = 0; i < size; i++) {
+                chain[i] = C.chain[i];
+            }
+        }
+    }
 
     friend std::istream &operator>>(std::istream &in, Chain &C) {
         in >> C.cost >> C.size;
@@ -71,10 +84,10 @@ class DataCenter {
         snMin = std::floor(n / (c * k));
         snMax = std::ceil((c * n) / k);
 
-        dataCenter = new int[t];
-        locks = new int[t];
+        dataCenter = new int[n];
+        locks = new int[n];
         adjList = new std::list<std::pair<int, double>>[n];
-        for (int i = 0; i < t; i++) {
+        for (int i = 0; i < n; i++) {
             dataCenter[i] = -1;
             locks[i] = 0;
         }
@@ -87,6 +100,77 @@ class DataCenter {
         delete[] adjList;
     }
 
+
+    void initialPartition() {
+        Chain sortedChains[t];
+        for (int i = 0; i < t; i++) {
+            sortedChains[i] = chains[i];
+        }
+        std::sort(sortedChains, sortedChains + t, [](Chain const &a, Chain const &b) -> bool {
+            return a.size * a.cost > b.size * b.cost;
+        });
+        // for (int i = 0; i < t; i++) {
+        //     std::cout<<sortedChains[i];
+        // }
+        int partitionSize = n / k;
+        if (partitionSize > snMax) {
+            partitionSize = snMax;
+        } else if (partitionSize < snMin) {
+            partitionSize = snMin;
+        }
+
+
+        int partitionRemainder = n % partitionSize;
+        int partitionedServiceCount = 0;
+        int partitionDatacenterCount = 0;
+        int partitionDatacenterIter = 0;
+
+        for (int i = 0; i < t; i++) {
+            Chain *chain = &sortedChains[i];
+            for (int j = 0; j < chain->size; j++) {
+                if (partitionedServiceCount >= n) {
+                    break;
+                }
+                int service = chain->chain[j];
+                if (dataCenter[service] == -1) {
+                    // Not allocated
+                    dataCenter[service] = partitionDatacenterIter;
+                    std::cout << "dataCenter[" << service << "]=" << partitionDatacenterIter
+                              << "\n";
+                    partitionedServiceCount++;
+                    partitionDatacenterCount++;
+
+                    if (partitionDatacenterCount >=
+                        partitionSize + (partitionRemainder > 0 ? 1 : 0)) {
+                        partitionDatacenterIter++;
+                        partitionDatacenterCount = 0;
+                        partitionRemainder--;
+                    }
+                }
+            }
+        }
+        for (int service = 0; service < n; service++) {
+            if (partitionedServiceCount >= n) {
+                break;
+            }
+            if (dataCenter[service] == -1) {
+                // Not allocated
+                dataCenter[service] = partitionDatacenterIter;
+                std::cout << "dataCenter[" << service << "]=" << partitionDatacenterIter << "\n";
+                partitionedServiceCount++;
+                partitionDatacenterCount++;
+
+                if (partitionDatacenterCount >= partitionSize + (partitionRemainder > 0 ? 1 : 0)) {
+                    partitionDatacenterIter++;
+                    partitionDatacenterCount = 0;
+                    partitionRemainder--;
+                }
+            }
+        }
+    }
+
+
+
     void printAdjList() {
         for (int i = 0; i < n; i++) {
             std::cout << "service=" << i << ": ";
@@ -96,6 +180,31 @@ class DataCenter {
             std::cout << "\n";
         }
     }
+
+    void printDataCenter() {
+        for (int i = 0; i < n; i++) {
+            std::cout << dataCenter[i] << " ";
+        }
+        std::cout << "\n";
+    }
+
+    friend std::ostream &operator<<(std::ostream &out, DataCenter &DC) {
+        std::list<int> serviceDatacenterMap[DC.k];
+        for (int service = 0; service < DC.n; service++) {
+            int dataCenter = DC.dataCenter[service];
+            serviceDatacenterMap[dataCenter].push_back(service);
+        }
+        for (int i = 0; i < DC.k; i++) {
+            out << serviceDatacenterMap[i].size();
+            for (int service : serviceDatacenterMap[i]) {
+                out << " " << service;
+            }
+            out << "\n";
+        }
+        return out;
+    }
+
+
 
 
    private:
@@ -141,6 +250,7 @@ void servie_chain_deployment(std::string file_name) {
         infile >> chains[i];
         chains[i].setId(i);
     }
+    infile.close();
 
 
     for (int i = 0; i < t; i++) {
@@ -148,11 +258,18 @@ void servie_chain_deployment(std::string file_name) {
     }
 
     DataCenter DC(k, n, c, t, lockSize, chains);
+    std::cout << "\n";
+    DC.initialPartition();
     DC.printAdjList();
+    // DC.printDataCenter();
 
 
 
 
+    std::ofstream outfile(file_name + ".out");
+    outfile << DC;
+    std::cout << DC;
+    outfile.close();
     // Don't forget to write the ".out" file
     return;
 }
