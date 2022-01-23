@@ -183,6 +183,9 @@ class DataCenter {
 
 
     void runOptimization(int maxIter = 10000) {
+        if (maxIter == 0) {
+            return;
+        }
         _createCostMap();
 
         double bestCost = calculateCost();
@@ -461,6 +464,21 @@ void servie_chain_deployment(std::string file_name) {
         lockSize = 1;
     }
 
+    int maxIter;
+    if (n < 10) {
+        maxIter = 10000000 / n;
+    } else if (10 <= n && n < 1000) {
+        maxIter = 10000000 / n;
+    } else if (1000 <= n && n < 10000) {
+        maxIter = 10000000 / n;
+    } else if (10000 <= n && n < 100000) {
+        maxIter = 10000000 / n;
+    } else if (100000 <= n && n < 1000000) {
+        maxIter = 10000000 / n;
+    } else if (1000000 <= n) {
+        maxIter = 0;
+    }
+
 
     Chain *chains = new Chain[t];
     for (int i = 0; i < t; i++) {
@@ -479,8 +497,7 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     DC.initialPartition();
     // DC.printDataCenterCount();
-    DC.runOptimization(10000000 / n - 1);
-    // DC.runOptimization(100);
+    DC.runOptimization(maxIter);
     // DC.printDataCenterCount();
     // std::cout << "cost=" << DC.calculateCost() << "\n";
 
