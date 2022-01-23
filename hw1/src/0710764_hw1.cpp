@@ -76,6 +76,7 @@ class DataCenter {
 
     Chain *chains;
     int *dataCenter;
+    int *dataCenterCount;
     int *locks;
     std::list<std::pair<int, double>> *adjList;
 
@@ -89,17 +90,23 @@ class DataCenter {
         snMax = std::ceil((c * n) / k);
 
         dataCenter = new int[n];
+        dataCenterCount = new int[k];
         locks = new int[n];
         adjList = new std::list<std::pair<int, double>>[n];
         for (int i = 0; i < n; i++) {
             dataCenter[i] = -1;
             locks[i] = 0;
         }
+        for (int i = 0; i < k; i++) {
+            dataCenterCount[i] = 0;
+        }
+
         _createAdjList();
     }
 
     ~DataCenter() {
         delete[] dataCenter;
+        delete[] dataCenterCount;
         delete[] locks;
         delete[] adjList;
     }
@@ -138,6 +145,7 @@ class DataCenter {
                 if (dataCenter[service] == -1) {
                     // Not allocated
                     dataCenter[service] = partitionDatacenterIter;
+                    dataCenterCount[partitionDatacenterIter]++;
                     // std::cout << "dataCenter[" << service << "]=" << partitionDatacenterIter
                     //           << "\n";
                     partitionedServiceCount++;
@@ -159,6 +167,7 @@ class DataCenter {
             if (dataCenter[service] == -1) {
                 // Not allocated
                 dataCenter[service] = partitionDatacenterIter;
+                dataCenterCount[partitionDatacenterIter]++;
                 // std::cout << "dataCenter[" << service << "]=" << partitionDatacenterIter << "\n";
                 partitionedServiceCount++;
                 partitionDatacenterCount++;
@@ -192,43 +201,55 @@ class DataCenter {
                 [](const pair_type_1 &p1, const pair_type_1 &p2) { return p1.second < p2.second; });
 
             // std::cout << "maxCostMovePair1=(" << maxCostMovePair1.first.first << ", "
-            //           << maxCostMovePair1.first.second << "): " << maxCostMovePair1.second << "\n";
+            //           << maxCostMovePair1.first.second << "): " << maxCostMovePair1.second <<
+            //           "\n";
 
             int oldDataCenter = dataCenter[maxCostMovePair1.first.first];
 
             _moveService(maxCostMovePair1.first.first, maxCostMovePair1.first.second,
                          maxCostMovePair1.second);
 
+            locks[maxCostMovePair1.first.first]++;
+
+
             // printDataCenter();
             // printCostMap();
 
-            std::map<std::pair<int, int>, double> filteredCostMap;
-            for (const auto &kvPair : costMap) {
-                if (dataCenter[kvPair.first.first] == maxCostMovePair1.first.second &&
-                    kvPair.first.second == oldDataCenter) {
-                    filteredCostMap[kvPair.first] = kvPair.second;
+
+            if ((!_checkBalance(oldDataCenter)) ||
+                (!_checkBalance(maxCostMovePair1.first.second))) {
+                std::map<std::pair<int, int>, double> filteredCostMap;
+                for (const auto &kvPair : costMap) {
+                    if (dataCenter[kvPair.first.first] == maxCostMovePair1.first.second &&
+                        kvPair.first.second == oldDataCenter) {
+                        filteredCostMap[kvPair.first] = kvPair.second;
+                    }
                 }
+
+                // std::cout << "\n";
+                // for (const auto &kvPair : filteredCostMap) {
+                //     std::cout << "(" << kvPair.first.first << ", " << kvPair.first.second
+                //               << "): " << kvPair.second << "\n";
+                // }
+
+                using pair_type_2 = decltype(filteredCostMap)::value_type;
+                auto maxCostMovePair2 =
+                    *std::max_element(std::begin(filteredCostMap), std::end(filteredCostMap),
+                                      [](const pair_type_2 &p1, const pair_type_2 &p2) {
+                                          return p1.second < p2.second;
+                                      });
+
+                // std::cout << "maxCostMovePair2=(" << maxCostMovePair2.first.first << ", "
+                //           << maxCostMovePair2.first.second << "): " << maxCostMovePair2.second <<
+                //           "\n";
+
+                _moveService(maxCostMovePair2.first.first, maxCostMovePair2.first.second,
+                             maxCostMovePair2.second);
+
+                locks[maxCostMovePair2.first.first]++;
             }
 
-            // std::cout << "\n";
-            // for (const auto &kvPair : filteredCostMap) {
-            //     std::cout << "(" << kvPair.first.first << ", " << kvPair.first.second
-            //               << "): " << kvPair.second << "\n";
-            // }
 
-            using pair_type_2 = decltype(filteredCostMap)::value_type;
-            auto maxCostMovePair2 = *std::max_element(
-                std::begin(filteredCostMap), std::end(filteredCostMap),
-                [](const pair_type_2 &p1, const pair_type_2 &p2) { return p1.second < p2.second; });
-
-            // std::cout << "maxCostMovePair2=(" << maxCostMovePair2.first.first << ", "
-            //           << maxCostMovePair2.first.second << "): " << maxCostMovePair2.second << "\n";
-
-            _moveService(maxCostMovePair2.first.first, maxCostMovePair2.first.second,
-                         maxCostMovePair2.second);
-
-            locks[maxCostMovePair1.first.first]++;
-            locks[maxCostMovePair2.first.first]++;
 
             double cost = calculateCost();
             if (cost < bestCost) {
@@ -281,6 +302,13 @@ class DataCenter {
     void printDataCenter() {
         for (int i = 0; i < n; i++) {
             std::cout << dataCenter[i] << " ";
+        }
+        std::cout << "\n";
+    }
+
+    void printDataCenterCount() {
+        for (int i = 0; i < k; i++) {
+            std::cout << dataCenterCount[i] << " ";
         }
         std::cout << "\n";
     }
@@ -371,6 +399,11 @@ class DataCenter {
         return lockCount >= costMap.size();
     }
 
+    bool _checkBalance(int datacenter) {
+        int count = dataCenterCount[datacenter];
+        return count >= snMin && count <= snMax;
+    }
+
     void _moveService(int service, int newDatacenter, double cost) {
         // int oldDatacenter = dataCenter[service];
         // costMap.erase(std::pair<int, int>(service, newDatacenter));
@@ -384,7 +417,8 @@ class DataCenter {
         //     }
         // }
         // costMap[std::pair<int, int>(service, oldDatacenter)] = -cost;
-
+        dataCenterCount[newDatacenter]++;
+        dataCenterCount[dataCenter[service]]--;
         dataCenter[service] = newDatacenter;
 
         _createCostMap();
@@ -423,6 +457,7 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     std::cout << "\n";
     DC.initialPartition();
+    // DC.printDataCenterCount();
     // DC.runOptimization(5000000 / n);
     DC.runOptimization(100);
     std::cout << "cost=" << DC.calculateCost() << "\n";
