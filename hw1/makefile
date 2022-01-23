@@ -5,3 +5,5 @@ clean:
 	@rm bin/*
 test%:
 	@./bin/validate_code inputs/test$(patsubst test%,%,$@)
+leak_test%:
+	@valgrind ./bin/validate_code inputs/test$(patsubst leak_test%,%,$@)
