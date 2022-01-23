@@ -7,13 +7,14 @@
 #include <list>
 #include <map>
 #include <utility>
+#include <vector>
 
 #include "answer.h"
 
 
 class Chain {
     int id;
-    int *chain;
+    std::vector<int> chain;
     int size;
     double cost;
 
@@ -22,14 +23,8 @@ class Chain {
         id = -1;
         size = 0;
         cost = 0;
-        chain = nullptr;
     }
 
-    ~Chain() {
-        if (chain != nullptr) {
-            delete chain;
-        }
-    }
 
     void setId(int id_in) { id = id_in; }
 
@@ -37,8 +32,9 @@ class Chain {
         id = C.id;
         size = C.size;
         cost = C.cost;
-        if (C.chain != nullptr) {
-            chain = new int[size];
+
+        if (C.size != 0) {
+            chain.resize(size);
             for (int i = 0; i < size; i++) {
                 chain[i] = C.chain[i];
             }
@@ -47,7 +43,7 @@ class Chain {
 
     friend std::istream &operator>>(std::istream &in, Chain &C) {
         in >> C.cost >> C.size;
-        C.chain = new int[C.size];
+        C.chain.resize(C.size);
         for (int i = 0; i < C.size; i++) {
             in >> C.chain[i];
         }
@@ -187,7 +183,7 @@ class DataCenter {
         _createCostMap();
 
         double bestCost = calculateCost();
-        int *bestDataCenter = new int[n];
+        int bestDataCenter[n];
         for (int service = 0; service < n; service++) {
             bestDataCenter[service] = dataCenter[service];
         }
