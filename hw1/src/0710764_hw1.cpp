@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <climits>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -229,7 +230,7 @@ class DataCenter {
             locks[maxCostMovePair1.first.first]++;
             locks[maxCostMovePair2.first.first]++;
 
-            int cost = calculateCost();
+            double cost = calculateCost();
             if (cost < bestCost) {
                 bestCost = cost;
                 for (int service = 0; service < n; service++) {
@@ -237,6 +238,11 @@ class DataCenter {
                 }
             }
             std::cout << "cost=" << cost << " bestCost=" << bestCost << "\n\n";
+
+            if (_checkLock()) {
+                std::cout << "\niterate " << i << " times\n\n";
+                break;
+            }
         }
 
         for (int service = 0; service < n; service++) {
@@ -349,6 +355,22 @@ class DataCenter {
         }
     }
 
+    // Modify costMap to make locked service has INT_MIN cost
+    bool _checkLock() {
+        int lockCount = 0;
+        for (int service = 0; service < n; service++) {
+            if (locks[service] >= lockSize) {
+                lockCount++;
+                for (const auto &kvPair : costMap) {
+                    if (kvPair.first.first == service) {
+                        costMap[kvPair.first] = INT_MIN;
+                    }
+                }
+            }
+        }
+        return lockCount >= n;
+    }
+
     void _moveService(int service, int newDatacenter, double cost) {
         // int oldDatacenter = dataCenter[service];
         // costMap.erase(std::pair<int, int>(service, newDatacenter));
@@ -401,7 +423,7 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     std::cout << "\n";
     DC.initialPartition();
-    DC.runOptimization(10);
+    DC.runOptimization(100);
     std::cout << "cost=" << DC.calculateCost() << "\n";
 
     // DC.printAdjList();
