@@ -111,7 +111,7 @@ class DataCenter {
 
 
     void initialPartition() {
-        Chain sortedChains[t];
+        Chain *sortedChains = new Chain[t];
         for (int i = 0; i < t; i++) {
             sortedChains[i] = chains[i];
         }
@@ -177,6 +177,7 @@ class DataCenter {
                 }
             }
         }
+        delete[] sortedChains;
     }
 
 
@@ -185,7 +186,7 @@ class DataCenter {
         _createCostMap();
 
         double bestCost = calculateCost();
-        int bestDataCenter[n];
+        int *bestDataCenter = new int[n];
         for (int service = 0; service < n; service++) {
             bestDataCenter[service] = dataCenter[service];
         }
@@ -275,6 +276,8 @@ class DataCenter {
         for (int service = 0; service < n; service++) {
             dataCenter[service] = bestDataCenter[service];
         }
+
+        delete[] bestDataCenter;
     }
 
 
@@ -458,8 +461,8 @@ void servie_chain_deployment(std::string file_name) {
         lockSize = 1;
     }
 
-    
-    Chain chains[t];
+
+    Chain *chains = new Chain[t];
     for (int i = 0; i < t; i++) {
         infile >> chains[i];
         chains[i].setId(i);
@@ -476,7 +479,7 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     DC.initialPartition();
     // DC.printDataCenterCount();
-    DC.runOptimization(10000000 / n);
+    DC.runOptimization(10000000 / n - 1);
     // DC.runOptimization(100);
     // DC.printDataCenterCount();
     // std::cout << "cost=" << DC.calculateCost() << "\n";
@@ -489,6 +492,7 @@ void servie_chain_deployment(std::string file_name) {
     outfile << DC;
     // std::cout << DC;
     outfile.close();
+    delete[] chains;
 
     // Don't forget to write the ".out" file
     return;
