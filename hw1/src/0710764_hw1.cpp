@@ -438,7 +438,6 @@ void servie_chain_deployment(std::string file_name) {
     double c;
     int snMin, snMax;
 
-    int lockSize = 1;
 
     std::ifstream infile(file_name + ".in");
     infile >> k >> n >> c >> t;
@@ -448,6 +447,18 @@ void servie_chain_deployment(std::string file_name) {
     std::cout << "k=" << k << " n=" << n << " c=" << c << " t=" << t << " snMin=" << snMin
               << " snMax=" << snMax << "\n";
 
+    int lockSize;
+    if (n < 10) {
+        lockSize = 5;
+    } else if (10 <= n && n < 1000) {
+        lockSize = 5;
+    } else if (1000 <= n && n < 10000) {
+        lockSize = 2;
+    } else if (10000 <= n) {
+        lockSize = 1;
+    }
+
+    
     Chain chains[t];
     for (int i = 0; i < t; i++) {
         infile >> chains[i];
@@ -465,10 +476,10 @@ void servie_chain_deployment(std::string file_name) {
     DataCenter DC(k, n, c, t, lockSize, chains);
     DC.initialPartition();
     // DC.printDataCenterCount();
-    // DC.runOptimization(5000000 / n);
-    DC.runOptimization(100);
+    DC.runOptimization(10000000 / n);
+    // DC.runOptimization(100);
     // DC.printDataCenterCount();
-    std::cout << "cost=" << DC.calculateCost() << "\n";
+    // std::cout << "cost=" << DC.calculateCost() << "\n";
 
     // DC.printAdjList();
     // DC.printDataCenter();
