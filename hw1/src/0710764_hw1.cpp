@@ -8,13 +8,14 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "answer.h"
 
 
 class Chain {
     int id;
-    std::vector<int> chain;
+    std::shared_ptr<std::vector<int>> chain = std::make_shared<std::vector<int>>();
     int size;
     double cost;
 
@@ -32,20 +33,14 @@ class Chain {
         id = C.id;
         size = C.size;
         cost = C.cost;
-
-        if (C.size != 0) {
-            chain.resize(size);
-            for (int i = 0; i < size; i++) {
-                chain[i] = C.chain[i];
-            }
-        }
+        chain = C.chain;
     }
 
     friend std::istream &operator>>(std::istream &in, Chain &C) {
         in >> C.cost >> C.size;
-        C.chain.resize(C.size);
+        C.chain->resize(C.size);
         for (int i = 0; i < C.size; i++) {
-            in >> C.chain[i];
+            in >> (*C.chain)[i];
         }
         return in;
     }
@@ -53,7 +48,7 @@ class Chain {
     friend std::ostream &operator<<(std::ostream &out, Chain &C) {
         out << "id=" << C.id << " size=" << C.size << " cost=" << C.cost << "\n";
         for (int i = 0; i < C.size; i++) {
-            out << C.chain[i] << " ";
+            out << (*C.chain)[i] << " ";
         }
         out << "\n";
         return out;
@@ -139,7 +134,7 @@ class DataCenter {
                 if (partitionedServiceCount >= n) {
                     break;
                 }
-                int service = chain->chain[j];
+                int service = (*chain->chain)[j];
                 if (dataCenter[service] == -1) {
                     // Not allocated
                     dataCenter[service] = partitionDatacenterIter;
@@ -287,9 +282,9 @@ class DataCenter {
     double calculateCost() {
         double totalCost = 0.0;
         for (int i = 0; i < t; i++) {
-            int prevDatacenter = dataCenter[chains[i].chain[0]];
+            int prevDatacenter = dataCenter[(*chains[i].chain)[0]];
             for (int j = 1; j < chains[i].size; j++) {
-                int currentDatacenter = dataCenter[chains[i].chain[j]];
+                int currentDatacenter = dataCenter[(*chains[i].chain)[j]];
                 if (prevDatacenter != currentDatacenter) {
                     totalCost += chains[i].cost;
                 }
@@ -358,14 +353,14 @@ class DataCenter {
             for (int j = 0; j < chain->size; j++) {
                 int prevIdx = j - 1;
                 int nextIdx = j + 1;
-                int service = chain->chain[j];
+                int service = (*chain->chain)[j];
                 if (prevIdx >= 0) {
                     adjList[service].push_back(
-                        std::pair<int, double>(chain->chain[prevIdx], chain->cost));
+                        std::pair<int, double>((*chain->chain)[prevIdx], chain->cost));
                 }
                 if (nextIdx < chain->size) {
                     adjList[service].push_back(
-                        std::pair<int, double>(chain->chain[nextIdx], chain->cost));
+                        std::pair<int, double>((*chain->chain)[nextIdx], chain->cost));
                 }
             }
         }
@@ -496,6 +491,7 @@ void servie_chain_deployment(std::string file_name) {
 
     DataCenter DC(k, n, c, t, lockSize, chains);
     DC.initialPartition();
+
     // DC.printDataCenterCount();
     DC.runOptimization(maxIter);
     // DC.printDataCenterCount();
@@ -509,7 +505,9 @@ void servie_chain_deployment(std::string file_name) {
     outfile << DC;
     // std::cout << DC;
     outfile.close();
+
     delete[] chains;
+
 
     // Don't forget to write the ".out" file
     return;
