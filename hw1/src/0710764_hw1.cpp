@@ -15,7 +15,7 @@
 
 class Chain {
     int id;
-    std::shared_ptr<std::vector<int>> chain = std::make_shared<std::vector<int>>();
+    std::shared_ptr<int[]> chain;
     int size;
     double cost;
 
@@ -38,9 +38,10 @@ class Chain {
 
     friend std::istream &operator>>(std::istream &in, Chain &C) {
         in >> C.cost >> C.size;
-        C.chain->resize(C.size);
+        std::shared_ptr<int[]> chain(new int[C.size]);
+        C.chain = chain;
         for (int i = 0; i < C.size; i++) {
-            in >> (*C.chain)[i];
+            in >> C.chain[i];
         }
         return in;
     }
@@ -48,7 +49,7 @@ class Chain {
     friend std::ostream &operator<<(std::ostream &out, Chain &C) {
         out << "id=" << C.id << " size=" << C.size << " cost=" << C.cost << "\n";
         for (int i = 0; i < C.size; i++) {
-            out << (*C.chain)[i] << " ";
+            out << C.chain[i] << " ";
         }
         out << "\n";
         return out;
@@ -65,7 +66,7 @@ class DataCenter {
     int snMin, snMax;
     int lockSize;
 
-    Chain *chains;
+    std::shared_ptr<Chain[]> chains;
     int *dataCenter;
     int *dataCenterCount;
     int *locks;
@@ -75,7 +76,7 @@ class DataCenter {
 
 
    public:
-    DataCenter(int k, int n, double c, int t, int lockSize, Chain *chains)
+    DataCenter(int k, int n, double c, int t, int lockSize, std::shared_ptr<Chain[]> chains)
         : k(k), n(n), c(c), t(t), lockSize(lockSize), chains(chains) {
         snMin = std::floor(double(n) / (c * k));
         snMax = std::ceil((c * n) / double(k));
@@ -106,14 +107,10 @@ class DataCenter {
 
 
     void initialPartition() {
-        Chain *sortedChains = new Chain[t];
-        for (int i = 0; i < t; i++) {
-            sortedChains[i] = chains[i];
-        }
-        std::sort(sortedChains, sortedChains + t,
+        std::sort(chains.get(), chains.get() + t,
                   [](Chain const &a, Chain const &b) -> bool { return a.cost > b.cost; });
         // for (int i = 0; i < t; i++) {
-        //     std::cout<<sortedChains[i];
+        //     std::cout<<chains[i];
         // }
         int partitionSize = n / k;
         if (partitionSize > snMax) {
@@ -129,12 +126,12 @@ class DataCenter {
         int partitionDatacenterIter = 0;
 
         for (int i = 0; i < t; i++) {
-            Chain *chain = &sortedChains[i];
+            Chain *chain = &chains[i];
             for (int j = 0; j < chain->size; j++) {
                 if (partitionedServiceCount >= n) {
                     break;
                 }
-                int service = (*chain->chain)[j];
+                int service = chain->chain[j];
                 if (dataCenter[service] == -1) {
                     // Not allocated
                     dataCenter[service] = partitionDatacenterIter;
@@ -172,7 +169,6 @@ class DataCenter {
                 }
             }
         }
-        delete[] sortedChains;
     }
 
 
@@ -282,9 +278,9 @@ class DataCenter {
     double calculateCost() {
         double totalCost = 0.0;
         for (int i = 0; i < t; i++) {
-            int prevDatacenter = dataCenter[(*chains[i].chain)[0]];
+            int prevDatacenter = dataCenter[chains[i].chain[0]];
             for (int j = 1; j < chains[i].size; j++) {
-                int currentDatacenter = dataCenter[(*chains[i].chain)[j]];
+                int currentDatacenter = dataCenter[chains[i].chain[j]];
                 if (prevDatacenter != currentDatacenter) {
                     totalCost += chains[i].cost;
                 }
@@ -353,14 +349,14 @@ class DataCenter {
             for (int j = 0; j < chain->size; j++) {
                 int prevIdx = j - 1;
                 int nextIdx = j + 1;
-                int service = (*chain->chain)[j];
+                int service = chain->chain[j];
                 if (prevIdx >= 0) {
                     adjList[service].push_back(
-                        std::pair<int, double>((*chain->chain)[prevIdx], chain->cost));
+                        std::pair<int, double>(chain->chain[prevIdx], chain->cost));
                 }
                 if (nextIdx < chain->size) {
                     adjList[service].push_back(
-                        std::pair<int, double>((*chain->chain)[nextIdx], chain->cost));
+                        std::pair<int, double>(chain->chain[nextIdx], chain->cost));
                 }
             }
         }
@@ -475,7 +471,7 @@ void servie_chain_deployment(std::string file_name) {
     }
 
 
-    Chain *chains = new Chain[t];
+    std::shared_ptr<Chain[]> chains(new Chain[t]);
     for (int i = 0; i < t; i++) {
         infile >> chains[i];
         chains[i].setId(i);
@@ -505,8 +501,6 @@ void servie_chain_deployment(std::string file_name) {
     outfile << DC;
     // std::cout << DC;
     outfile.close();
-
-    delete[] chains;
 
 
     // Don't forget to write the ".out" file
