@@ -2,13 +2,13 @@
 #include <array>
 #include <climits>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
-#include <utility>
-#include <vector>
 #include <memory>
+#include <utility>
 
 #include "answer.h"
 
@@ -39,10 +39,10 @@ class Chain {
     friend std::istream &operator>>(std::istream &in, Chain &C) {
         in >> C.cost >> C.size;
         std::shared_ptr<int[]> chain(new int[C.size]);
-        C.chain = chain;
         for (int i = 0; i < C.size; i++) {
-            in >> C.chain[i];
+            in >> chain[i];
         }
+        C.chain = chain;
         return in;
     }
 
@@ -80,8 +80,8 @@ class DataCenter {
         : k(k), n(n), c(c), t(t), lockSize(lockSize), chains(chains) {
         snMin = std::floor(double(n) / (c * k));
         snMax = std::ceil((c * n) / double(k));
-        std::cout << "k=" << k << " n=" << n << " c=" << c << " t=" << t << " snMin=" << snMin
-                  << " snMax=" << snMax << "\n";
+        // std::cout << "k=" << k << " n=" << n << " c=" << c << " t=" << t << " snMin=" << snMin
+        //           << " snMax=" << snMax << "\n";
 
         dataCenter = new int[n];
         dataCenterCount = new int[k];
@@ -94,8 +94,6 @@ class DataCenter {
         for (int i = 0; i < k; i++) {
             dataCenterCount[i] = 0;
         }
-
-        _createAdjList();
     }
 
     ~DataCenter() {
@@ -177,6 +175,7 @@ class DataCenter {
         if (maxIter == 0) {
             return;
         }
+        _createAdjList();
         _createCostMap();
 
         double bestCost = calculateCost();
@@ -431,10 +430,12 @@ class DataCenter {
 void servie_chain_deployment(std::string file_name) {
     // The input file name does NOT includes ".in"
     // You'll need to handle the file I/O here by yourself
+
+
+    // Read parameters
     int k, n, t;
     double c;
     int snMin, snMax;
-
 
     std::ifstream infile(file_name + ".in");
     infile >> k >> n >> c >> t;
@@ -442,8 +443,10 @@ void servie_chain_deployment(std::string file_name) {
     snMax = std::ceil((c * n) / k);
 
     std::cout << "k=" << k << " n=" << n << " c=" << c << " t=" << t << " snMin=" << snMin
-              << " snMax=" << snMax << "\n";
+              << " snMax=" << snMax << "\n\n";
 
+
+    // Determine lock size
     int lockSize;
     if (n < 10) {
         lockSize = 5;
@@ -455,6 +458,8 @@ void servie_chain_deployment(std::string file_name) {
         lockSize = 1;
     }
 
+
+    // Determine iterate times
     int maxIter;
     if (n < 10) {
         maxIter = 10000000 / n;
@@ -471,36 +476,87 @@ void servie_chain_deployment(std::string file_name) {
     }
 
 
+
+    clock_t start, finish;
+
+
+    // Read Service Chains
+    start = clock();
+
     std::shared_ptr<Chain[]> chains(new Chain[t]);
     for (int i = 0; i < t; i++) {
         infile >> chains[i];
         chains[i].setId(i);
     }
+
+    finish = clock();
+    std::cout << "Read Chain :\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
+
     infile.close();
 
 
+    // Print Chains
     // for (int i = 0; i < t; i++) {
     //     std::cout << chains[i];
     // }
     // std::cout << "\n";
 
 
+    // Initialize DataCenter
+    start = clock();
+
     DataCenter DC(k, n, c, t, lockSize, chains);
+
+    finish = clock();
+    std::cout << "Initialize DC:\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
+
+
+    // Initial Partition
+    start = clock();
+
     DC.initialPartition();
 
-    // DC.printDataCenterCount();
-    DC.runOptimization(maxIter);
-    // DC.printDataCenterCount();
-    // std::cout << "cost=" << DC.calculateCost() << "\n";
+    finish = clock();
+    std::cout << "Initialize Partition:\t " << double(finish - start) / CLOCKS_PER_SEC
+              << " seconds\n";
 
+
+    // DC.printDataCenterCount();
+
+
+    // Run optimization;
+    start = clock();
+
+    DC.runOptimization(maxIter);
+
+    finish = clock();
+    std::cout << "Optimization Total:\t " << double(finish - start) / CLOCKS_PER_SEC
+              << " seconds\n";
+    if (maxIter != 0) {
+        std::cout << "Optimization Avg:\t " << double(finish - start) / CLOCKS_PER_SEC / maxIter
+                  << " seconds\n";
+    }
+
+
+
+
+    // std::cout << "cost=" << DC.calculateCost() << "\n";
     // DC.printAdjList();
     // DC.printDataCenter();
+    // DC.printDataCenterCount();
 
+
+
+    // Output
+    start = clock();
 
     std::ofstream outfile(file_name + ".out");
     outfile << DC;
     // std::cout << DC;
     outfile.close();
+
+    finish = clock();
+    std::cout << "Output:\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n\n";
 
 
     // Don't forget to write the ".out" file
