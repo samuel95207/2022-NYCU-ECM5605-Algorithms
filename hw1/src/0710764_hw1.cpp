@@ -7,11 +7,19 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <utility>
 
 #include "answer.h"
 
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator() (const std::pair<T1, T2> &pair) const {
+        return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+    }
+};
 
 class Chain {
     int id;
@@ -72,7 +80,7 @@ class DataCenter {
     int *locks;
     std::list<std::pair<int, double>> *adjList;
 
-    std::map<std::pair<int, int>, double> costMap;
+    std::unordered_map<std::pair<int, int>, double, pair_hash> costMap;
 
 
    public:
@@ -210,7 +218,7 @@ class DataCenter {
 
             if ((!_checkBalance(oldDataCenter)) ||
                 (!_checkBalance(maxCostMovePair1.first.second))) {
-                std::map<std::pair<int, int>, double> filteredCostMap;
+                std::unordered_map<std::pair<int, int>, double, pair_hash> filteredCostMap;
                 for (const auto &kvPair : costMap) {
                     if (dataCenter[kvPair.first.first] == maxCostMovePair1.first.second &&
                         kvPair.first.second == oldDataCenter) {
@@ -343,6 +351,10 @@ class DataCenter {
 
    private:
     void _createAdjList() {
+
+        // clock_t start, finish;
+        // start = clock();
+
         for (int i = 0; i < t; i++) {
             Chain *chain = &chains[i];
             for (int j = 0; j < chain->size; j++) {
@@ -359,11 +371,19 @@ class DataCenter {
                 }
             }
         }
+
+        // finish = clock();
+        // std::cout << "Create Adj List :\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
     }
 
     void _createCostMap() {
+        
+        // clock_t start, finish;
+        // start = clock();
+
         costMap.clear();
         for (int service = 0; service < n; service++) {
+            // std::cout << "service=" << service << "\n";
             auto adjs = adjList[service];
             double initialValue = 0.0;
             for (const auto &adjPair : adjs) {
@@ -383,6 +403,9 @@ class DataCenter {
                 costMap[serviceDatacenterPair] += adjPair.second;
             }
         }
+
+        // finish = clock();
+        // std::cout << "Create Cost Map :\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
     }
 
     // Modify costMap to make locked service has INT_MIN cost
