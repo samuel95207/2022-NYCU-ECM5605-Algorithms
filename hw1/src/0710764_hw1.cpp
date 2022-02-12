@@ -81,6 +81,7 @@ class DataCenter {
     std::list<std::pair<int, double>> *adjList;
 
     std::unordered_map<std::pair<int, int>, double, pair_hash> costMap;
+    // std::map<std::pair<int, int>, double> costMap;
 
 
    public:
@@ -219,6 +220,7 @@ class DataCenter {
             if ((!_checkBalance(oldDataCenter)) ||
                 (!_checkBalance(maxCostMovePair1.first.second))) {
                 std::unordered_map<std::pair<int, int>, double, pair_hash> filteredCostMap;
+                // std::map<std::pair<int, int>, double> filteredCostMap;
                 for (const auto &kvPair : costMap) {
                     if (dataCenter[kvPair.first.first] == maxCostMovePair1.first.second &&
                         kvPair.first.second == oldDataCenter) {
@@ -483,7 +485,9 @@ void servie_chain_deployment(std::string file_name) {
 
 
     // Determine iterate times
-    int maxIter, nIterIndex, tIterIndex;
+    int maxIter;
+    int nIterIndex = 1;
+    int tIterIndex = 1;
     if (n < 10) {
         nIterIndex = 10000000 / n;
     } else if (10 <= n && n < 1000) {
@@ -498,14 +502,16 @@ void servie_chain_deployment(std::string file_name) {
         nIterIndex = 1;
     }
 
+    if(t < 500000){
+        tIterIndex = 1;
+    }
     if(500000 <= t){
         tIterIndex = 0;
-    }else{
-        tIterIndex = 1;
     }
 
     maxIter = nIterIndex * tIterIndex;
 
+    std::cout<<"maxIter="<<maxIter<<"\n\n";
 
 
     clock_t start, finish;
