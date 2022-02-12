@@ -398,7 +398,7 @@ class DataCenter {
                 }
                 std::pair<int, int> serviceDatacenterPair(service, dataCenter[adjPair.first]);
                 if (costMap.find(serviceDatacenterPair) == costMap.end()) {
-                    costMap[serviceDatacenterPair] = initialValue;
+                    costMap.insert(std::pair<std::pair<int, int>,double>(serviceDatacenterPair,initialValue));
                 }
                 costMap[serviceDatacenterPair] += adjPair.second;
             }
@@ -483,20 +483,28 @@ void servie_chain_deployment(std::string file_name) {
 
 
     // Determine iterate times
-    int maxIter;
+    int maxIter, nIterIndex, tIterIndex;
     if (n < 10) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000 / n;
     } else if (10 <= n && n < 1000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000 / n;
     } else if (1000 <= n && n < 10000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000 / n;
     } else if (10000 <= n && n < 100000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000 / n;
     } else if (100000 <= n && n < 1000000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000 / n;
     } else if (1000000 <= n) {
-        maxIter = 0;
+        nIterIndex = 1;
     }
+
+    if(500000 <= t){
+        tIterIndex = 0;
+    }else{
+        tIterIndex = 1;
+    }
+
+    maxIter = nIterIndex * tIterIndex;
 
 
 
@@ -546,6 +554,11 @@ void servie_chain_deployment(std::string file_name) {
 
     // DC.printDataCenterCount();
 
+    // Output initial partition
+    std::ofstream outfile(file_name + ".out");
+    outfile << DC;
+    outfile.close();
+
 
     // Run optimization;
     start = clock();
@@ -573,7 +586,6 @@ void servie_chain_deployment(std::string file_name) {
     // Output
     start = clock();
 
-    std::ofstream outfile(file_name + ".out");
     outfile << DC;
     // std::cout << DC;
     outfile.close();
