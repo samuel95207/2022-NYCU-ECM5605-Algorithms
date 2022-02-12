@@ -486,26 +486,30 @@ void servie_chain_deployment(std::string file_name) {
 
     // Determine iterate times
     int maxIter;
-    int nIterIndex = 1;
-    int tIterIndex = 1;
+    double nIterIndex = 1;
+    double tIterIndex = 1;
     if (n < 10) {
-        nIterIndex = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (10 <= n && n < 1000) {
-        nIterIndex = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (1000 <= n && n < 10000) {
-        nIterIndex = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (10000 <= n && n < 100000) {
-        nIterIndex = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (100000 <= n && n < 1000000) {
-        nIterIndex = 10000000 / n;
-    } else if (1000000 <= n) {
-        nIterIndex = 1;
+        nIterIndex = 10000000.0 / n * 2;
+    } else if (1000000 <= n && n < 10000000) {
+        nIterIndex = 10000000.0 / n * 4;
     }
-
-    if(t < 500000){
+    if(t < 10000)
         tIterIndex = 1;
-    }
-    if(500000 <= t){
+    else if(10000 <= t && t < 50000){
+        tIterIndex = 5000.0 / t;
+    }else if(50000 <= t && t < 100000){
+        tIterIndex = 5000.0 / t;
+    }else if(100000 <= t && t < 500000){
+        tIterIndex = 5000.0 / t;
+    }else if(500000 <= t){
         tIterIndex = 0;
     }
 
@@ -561,9 +565,9 @@ void servie_chain_deployment(std::string file_name) {
     // DC.printDataCenterCount();
 
     // Output initial partition
-    std::ofstream outfile(file_name + ".out");
-    outfile << DC;
-    outfile.close();
+    std::ofstream outfile1(file_name + ".out");
+    outfile1 << DC;
+    outfile1.close();
 
 
     // Run optimization;
@@ -592,9 +596,9 @@ void servie_chain_deployment(std::string file_name) {
     // Output
     start = clock();
 
-    outfile << DC;
-    // std::cout << DC;
-    outfile.close();
+    std::ofstream outfile2(file_name + ".out");
+    outfile2 << DC;
+    outfile2.close();
 
     finish = clock();
     std::cout << "Output:\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n\n";
