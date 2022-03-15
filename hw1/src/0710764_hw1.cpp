@@ -7,11 +7,19 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <utility>
 
 #include "answer.h"
 
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator() (const std::pair<T1, T2> &pair) const {
+        return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+    }
+};
 
 class Chain {
     int id;
@@ -72,7 +80,8 @@ class DataCenter {
     int *locks;
     std::list<std::pair<int, double>> *adjList;
 
-    std::map<std::pair<int, int>, double> costMap;
+    std::unordered_map<std::pair<int, int>, double, pair_hash> costMap;
+    // std::map<std::pair<int, int>, double> costMap;
 
 
    public:
@@ -210,7 +219,8 @@ class DataCenter {
 
             if ((!_checkBalance(oldDataCenter)) ||
                 (!_checkBalance(maxCostMovePair1.first.second))) {
-                std::map<std::pair<int, int>, double> filteredCostMap;
+                std::unordered_map<std::pair<int, int>, double, pair_hash> filteredCostMap;
+                // std::map<std::pair<int, int>, double> filteredCostMap;
                 for (const auto &kvPair : costMap) {
                     if (dataCenter[kvPair.first.first] == maxCostMovePair1.first.second &&
                         kvPair.first.second == oldDataCenter) {
@@ -343,6 +353,10 @@ class DataCenter {
 
    private:
     void _createAdjList() {
+
+        // clock_t start, finish;
+        // start = clock();
+
         for (int i = 0; i < t; i++) {
             Chain *chain = &chains[i];
             for (int j = 0; j < chain->size; j++) {
@@ -359,11 +373,19 @@ class DataCenter {
                 }
             }
         }
+
+        // finish = clock();
+        // std::cout << "Create Adj List :\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
     }
 
     void _createCostMap() {
+        
+        // clock_t start, finish;
+        // start = clock();
+
         costMap.clear();
         for (int service = 0; service < n; service++) {
+            // std::cout << "service=" << service << "\n";
             auto adjs = adjList[service];
             double initialValue = 0.0;
             for (const auto &adjPair : adjs) {
@@ -378,11 +400,14 @@ class DataCenter {
                 }
                 std::pair<int, int> serviceDatacenterPair(service, dataCenter[adjPair.first]);
                 if (costMap.find(serviceDatacenterPair) == costMap.end()) {
-                    costMap[serviceDatacenterPair] = initialValue;
+                    costMap.insert(std::pair<std::pair<int, int>,double>(serviceDatacenterPair,initialValue));
                 }
                 costMap[serviceDatacenterPair] += adjPair.second;
             }
         }
+
+        // finish = clock();
+        // std::cout << "Create Cost Map :\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n";
     }
 
     // Modify costMap to make locked service has INT_MIN cost
@@ -461,20 +486,36 @@ void servie_chain_deployment(std::string file_name) {
 
     // Determine iterate times
     int maxIter;
+    double nIterIndex = 1;
+    double tIterIndex = 1;
     if (n < 10) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (10 <= n && n < 1000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (1000 <= n && n < 10000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (10000 <= n && n < 100000) {
-        maxIter = 10000000 / n;
+        nIterIndex = 10000000.0 / n;
     } else if (100000 <= n && n < 1000000) {
-        maxIter = 10000000 / n;
-    } else if (1000000 <= n) {
-        maxIter = 0;
+        nIterIndex = 10000000.0 / n * 2;
+    } else if (1000000 <= n && n < 10000000) {
+        nIterIndex = 10000000.0 / n * 4;
+    }
+    if(t < 10000)
+        tIterIndex = 1;
+    else if(10000 <= t && t < 50000){
+        tIterIndex = 5000.0 / t;
+    }else if(50000 <= t && t < 100000){
+        tIterIndex = 5000.0 / t;
+    }else if(100000 <= t && t < 500000){
+        tIterIndex = 5000.0 / t;
+    }else if(500000 <= t){
+        tIterIndex = 0;
     }
 
+    maxIter = nIterIndex * tIterIndex;
+
+    std::cout<<"maxIter="<<maxIter<<"\n\n";
 
 
     clock_t start, finish;
@@ -523,6 +564,11 @@ void servie_chain_deployment(std::string file_name) {
 
     // DC.printDataCenterCount();
 
+    // Output initial partition
+    std::ofstream outfile1(file_name + ".out");
+    outfile1 << DC;
+    outfile1.close();
+
 
     // Run optimization;
     start = clock();
@@ -550,10 +596,9 @@ void servie_chain_deployment(std::string file_name) {
     // Output
     start = clock();
 
-    std::ofstream outfile(file_name + ".out");
-    outfile << DC;
-    // std::cout << DC;
-    outfile.close();
+    std::ofstream outfile2(file_name + ".out");
+    outfile2 << DC;
+    outfile2.close();
 
     finish = clock();
     std::cout << "Output:\t " << double(finish - start) / CLOCKS_PER_SEC << " seconds\n\n";
