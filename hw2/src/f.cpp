@@ -6,10 +6,10 @@
 using namespace std;
 
 double bound(double num){
-	return max(DBL_MIN, min(DBL_MAX, num));
+	return max(-DBL_MAX, min(DBL_MAX, num));
 }
 
-// /*
+/*
 double f(long in_number){
         return in_number;
 }
@@ -30,7 +30,7 @@ double f(long in_number){
 // */
 
 
-/*
+// /*
 double f(long in_number){
         return bound( 100*sin(in_number*10) );
 }
