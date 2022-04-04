@@ -40,63 +40,6 @@ void InsertionSort(std::vector<ValuePosPair>& arr, int begin, int end) {
         }
         arr[j + 1] = key;
     }
-
-    // for (int i = begin + 1; i < end; i++) {
-    //     int j = i;
-    //     while (j > begin && arr[originalPosArr[j - 1]] > arr[originalPosArr[j]]) {
-    //         swap(mapArr[originalPosArr[j - 1]], mapArr[originalPosArr[j]]);
-    //         swap(originalPosArr[j - 1], originalPosArr[j]);
-    //         j--;
-    //     }
-    // }
-
-    // for (int i = begin + 1; i < end; i++) {
-    //     int j = i;
-    //     int jPos = originalPosArr[j];
-    //     int jMinusPos = originalPosArr[j - 1];
-    //     while (j > begin && arr[jMinusPos] > arr[jPos]) {
-    //         swap(mapArr[jMinusPos], mapArr[jPos]);
-    //         swap(originalPosArr[j - 1], originalPosArr[j]);
-    //         j--;
-
-    //         jPos = originalPosArr[j];
-    //         jMinusPos = originalPosArr[j - 1];
-    //     }
-    // }
-
-
-    // for (int i = begin + 1; i < end; i++) {
-    //     int keyOriginalPos = originalPosArr[i];
-    //     double key = arr[keyOriginalPos];
-
-    //     int j = i - 1;
-    //     while (j >= 0 && arr[originalPosArr[j]] > key) {
-    //         mapArr[originalPosArr[j]] = j + 1;
-    //         originalPosArr[j + 1] = originalPosArr[j];
-    //         j--;
-    //     }
-    //     mapArr[keyOriginalPos] = j + 1;
-    //     originalPosArr[j + 1] = keyOriginalPos;
-    // }
-
-    // for (int i = begin + 1; i < end; i++) {
-    //     int keyOriginalPos = originalPosArr[i];
-    //     double key = arr[keyOriginalPos];
-
-    //     int j = i - 1;
-    //     int jPos = originalPosArr[j];
-    //     while (j >= 0 && arr[jPos] > key) {
-    //         mapArr[jPos] = j + 1;
-    //         originalPosArr[j + 1] = jPos;
-    //         j--;
-
-    //         jPos = originalPosArr[j];
-    //     }
-    //     mapArr[keyOriginalPos] = j + 1;
-    //     originalPosArr[j + 1] = keyOriginalPos;
-    // }
-
-    return;
 }
 
 
@@ -165,10 +108,6 @@ void QuickSort(std::vector<ValuePosPair>& arr, int begin, int end) {
             QuickSort(arr, begin, pivot);
             QuickSort(arr, pivot + 1, end);
         }
-
-        // int pivot = Partition(arr, mapArr, originalPosArr, begin, end);
-        // QuickSort(arr, mapArr, originalPosArr, begin, pivot);
-        // QuickSort(arr, mapArr, originalPosArr, pivot + 1, end);
     }
 }
 
@@ -343,24 +282,28 @@ std::vector<long> my_sort(std::vector<long> input) {
         inputPairPtr->pos = i;
     }
 
+    // Print
     // for (int i = 0; i < size; i++) {
     //     cout << inputPairs[i].value << " ";
     // }
     // cout << endl;
 
+
+    // Sorting Algorithms
     // InsertionSort(inputPairs, 0, size);
     // QuickSort(inputPairs, 0, size);
     // IntroSort(inputPairs, 0, size);
     // HeapSort(inputPairs, 0, size);
-    // MergeSort(inputPairs, 0, size);
+    MergeSort(inputPairs, 0, size);
     // TimSort(inputPairs);
-    sort(inputPairs.begin(), inputPairs.end(), valuePosPaircompare);
+    // sort(inputPairs.begin(), inputPairs.end(), valuePosPaircompare);
 
 
     for (int i = 0; i < size; i++) {
         result[inputPairs[i].pos] = i;
     }
 
+    // Print
     // for (int i = 0; i < size; i++) {
     //     cout << inputPairs[i].value << " ";
     // }
