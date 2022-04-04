@@ -353,13 +353,13 @@ std::vector<long> my_sort(std::vector<long> input) {
     // IntroSort(inputPairs, 0, size);
     // HeapSort(inputPairs, 0, size);
     // MergeSort(inputPairs, 0, size);
-    TimSort(inputPairs);
-    // sort(inputPairs.begin(), inputPairs.end(), valuePosPaircompare);
+    // TimSort(inputPairs);
+    sort(inputPairs.begin(), inputPairs.end(), valuePosPaircompare);
 
 
-    // for (int i = 0; i < size; i++) {
-    //     result[inputPairs[i].pos] = i;
-    // }
+    for (int i = 0; i < size; i++) {
+        result[inputPairs[i].pos] = i;
+    }
 
     // for (int i = 0; i < size; i++) {
     //     cout << inputPairs[i].value << " ";
