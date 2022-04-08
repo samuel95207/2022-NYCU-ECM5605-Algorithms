@@ -37,7 +37,7 @@ int main()
     //printf("Given Array is\n"); 
     printArray(arr, LEN); 
     gettimeofday(&start, NULL);
-    //insertionSort(arr, LEN); 
+    insertionSort(arr, LEN); 
     gettimeofday(&end, NULL);
     long int diff = 1000000*(end.tv_sec-start.tv_sec)+end.tv_usec-start.tv_usec;
     cout << "Sorting " << LEN << " numbers takes " << diff << " usec.\n";
